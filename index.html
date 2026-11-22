@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero Clone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root {
+    --page: #f0f1fa;
+    --ink: #000;
+    --card: #15161a;
+    --chip: #e4e6ef;
+    --chip-dark: #2b2e3a;
+    --ease-emph: cubic-bezier(0.2, 0, 0, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--page); }
+  body { font-family: "Inter Tight", "Helvetica Neue", Arial, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; border: 0; background: none; color: inherit; cursor: pointer; }
+
+  /* ---------- hero ---------- */
+  /* one full-page WebGL canvas draws the page, the card and the 3D, then the cursor's fluid distorts all of it */
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+  #hero { position: fixed; inset: 0; z-index: 1; }
+  #visual { position: absolute; left: 72px; top: 199px; right: 72px; bottom: 50px; border-radius: 20px; }
+  html.nogl #visual { background: radial-gradient(70% 90% at 62% 55%, #2a2d36 0%, #1c1d23 45%, var(--card) 100%); }
+
+  /* header */
+  #header { position: absolute; top: 0; left: 0; right: 0; padding: 50px 72px 0; }
+  #header-row { display: flex; align-items: flex-start; height: 46px; overflow: hidden; padding-bottom: 1.6px; }
+  #logo { position: absolute; left: 72px; top: 59px; width: 120px; height: 24px; }
+  #logo svg { display: block; width: 120px; height: 24px; overflow: visible; }
+  #header-right { margin-left: auto; display: flex; gap: 18px; }
+  .chip { height: 45px; border-radius: 87.5px; display: flex; align-items: center; justify-content: center;
+          font-size: 14px; font-weight: 500; line-height: 16.1px; text-transform: uppercase; }
+  #sound { width: 45px; background: var(--chip); }
+  #sound i { display: block; width: 16px; height: 2px; background: #000; border-radius: 1px; }
+  #talk { width: 134px; background: var(--chip-dark); color: #fff; gap: 9px; letter-spacing: -0.01em; }
+  #menu { width: 102px; background: var(--chip); gap: 9px; letter-spacing: -0.01em; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; display: inline-block; }
+  .dots { display: inline-flex; gap: 2px; }
+
+  /* title: line-clipped word rise */
+  #title { position: absolute; left: 403px; top: 50px; width: 523px; font-weight: 400;
+           font-size: 36px; line-height: 39.6px; letter-spacing: -0.012em; }
+  #title .line { display: block; overflow: hidden; height: 39.6px; white-space: nowrap; }
+  #title .word { display: inline-block; margin-right: 0.24em; }
+  #title .word:last-child { margin-right: 0; }
+
+  /* scroll row */
+  #scroll-row { position: absolute; left: 72px; right: 72px; top: 850px; height: 50px; }
+  .cross { position: absolute; top: 18px; width: 14px; height: 14px; }
+  .cross::before, .cross::after { content: ""; position: absolute; background: #000; }
+  .cross::before { left: 6px; top: 0; width: 2px; height: 14px; }
+  .cross::after { top: 6px; left: 0; width: 14px; height: 2px; }
+  #scroll-text { position: absolute; left: 50%; top: 17px; transform: translateX(-50%); overflow: hidden;
+                 font-size: 14.4px; font-weight: 500; line-height: 16.56px; text-transform: uppercase; color: #0d0d0d;
+                 white-space: nowrap; letter-spacing: -0.01em; }
+  #scroll-text .word { display: inline-block; margin-right: 0.22em; }
+  #scroll-text .word:last-child { margin-right: 0; }
+
+  /* ---------- intro overlay ---------- */
+  #wash { position: fixed; inset: 0; background: #fff; pointer-events: none; z-index: 2; }
+  #intro { position: fixed; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
+  #intro.boot { background: #000; }   /* black from the very first paint, before scripts and fonts load */
+  .done #intro, .done #wash { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #intro, #wash { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hero">
+  <div id="visual"></div>
+
+  <header id="header">
+    <a id="logo" href="#" aria-label="Studio home">
+      <svg viewBox="0 0 120 24" aria-hidden="true"><text x="0" y="22.6" textLength="120" lengthAdjust="spacingAndGlyphs"
+        font-family="Inter Tight, Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="31.2">LUSION</text></svg>
+    </a>
+    <div id="header-row">
+      <div id="header-right">
+        <button class="chip" id="sound" aria-label="Sound"><i></i></button>
+        <button class="chip" id="talk">Let's talk <span class="dot"></span></button>
+        <button class="chip" id="menu">Menu <span class="dots"><span class="dot"></span><span class="dot"></span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <h1 id="title" aria-label="We create 3D visual storytelling and interactive web experiences that help brands stand out">
+    <span class="line"><span class="word">We</span><span class="word">create</span><span class="word">3D</span><span class="word">visual</span><span class="word">storytelling</span></span>
+    <span class="line"><span class="word">and</span><span class="word">interactive</span><span class="word">web</span><span class="word">experiences</span></span>
+    <span class="line"><span class="word">that</span><span class="word">help</span><span class="word">brands</span><span class="word">stand</span><span class="word">out</span></span>
+  </h1>
+
+  <div id="scroll-row">
+    <span class="cross" style="left:0"></span>
+    <span class="cross" style="left:425px"></span>
+    <span class="cross" style="left:857px"></span>
+    <span class="cross" style="right:0"></span>
+    <div id="scroll-text"><span class="word">Scroll</span><span class="word">to</span><span class="word">explore</span></div>
+  </div>
+</div>
+
+<div id="wash"></div>
+<canvas id="intro" class="boot"></canvas>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
