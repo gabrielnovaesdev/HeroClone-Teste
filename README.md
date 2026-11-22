@@ -6,7 +6,9 @@ Teste da skill **reanimate**: reconstrução, do zero, da primeira seção (hero
 >
 > Estudo de movimento. Não é o site original: modelos 3D, shaders, fonte (Aeonik) e logo **não** foram copiados. A geometria é gerada por código, a fonte é Inter Tight e o logo é texto. Todo o código aqui é novo.
 
-## Rodar
+**Demo:** https://gabrielnovaesdev.github.io/hero-clone-test/
+
+## Rodar localmente
 
 ```powershell
 node serve.mjs
